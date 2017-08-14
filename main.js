@@ -36,72 +36,6 @@ const todos = (state = [], action) => {
     }
 }
 
-const testAddTodo = () => {
-    const stateBefore = [];
-    const action = {
-        type: 'ADD_TODO',
-        id: 0,
-        text: 'Learn Redux'
-    };
-    const stateAfter = [
-        {
-            id: 0,
-            text: 'Learn Redux',
-            completed: false
-        }
-    ];
-
-    deepFreeze(stateBefore);
-    deepFreeze(action);
-
-    expect(
-        todos(stateBefore, action)
-    ).toEqual(stateAfter);
-
-}
-
-const testToggleTodo = () => {
-    const stateBefore = [
-        {
-            id: 0,
-            text: "Learn Redux",
-            completed: false
-        },
-        {
-            id: 1,
-            text: "Go Redux",
-            completed: false
-        }
-    ];
-    const action = {
-        type: 'TOGGLE_TODO',
-        id: 1
-    };
-    const stateAfter = [
-        {
-            id: 0,
-            text: "Learn Redux",
-            completed: false
-        },
-        {
-            id: 1,
-            text: "Go Redux",
-            completed: true
-        }
-    ];
-
-    deepFreeze(stateBefore);
-    deepFreeze(action);
-
-    expect(
-        todos(stateBefore, action)
-    ).toEqual(stateAfter);
-}
-
-//testAddTodo();
-//testToggleTodo();
-//console.log("ALL TEST PASSED");
-
 const visFilter = (state = 'SHOW_ALL', action) => {
     switch (action.type) {
         case 'SET_VIS_FILTER':
@@ -114,38 +48,54 @@ const visFilter = (state = 'SHOW_ALL', action) => {
 const todoApp = combineReducers({ todos, visFilter });
 const store = createStore(todoApp);
 
-log('Initial state: ');
-log(store.getState());
-log('---------------');
+let nextTodoId = 0;
+class TodoApp extends React.Component {
+    render() {
+        return (
+            <div>
+                <input ref={node => {
+                    this.input = node;
+                }} />
+                <button onClick={() => {
+                    store.dispatch({
+                        type: 'ADD_TODO',
+                        text: this.input.value,
+                        id: nextTodoId++
+                    });
+                    this.input.value = '';
+                }}>
+                    Add todo
+                </button>
+                <ul>
+                    {this.props.todos.map(todo =>
+                        <li key={todo.id}
+                            onClick={() => {
+                                store.dispatch({
+                                    type: 'TOGGLE_TODO',
+                                    id: todo.id
+                                });
+                            }}
+                            style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}
+                        >
+                            {todo.text}
+                        </li>
+                    )}
+                </ul>
+            </div>
+        );
+    }
+}
 
-log('Dispatching ADD_TODO.');
-store.dispatch({
-    type: 'ADD_TODO',
-    id: 0,
-    text: 'Learn Redux'
-});
 
-log('Current state: ');
-log(store.getState());
-log('---------------');
+const render = () => {
+    ReactDOM.render(
+        <TodoApp
+            todos={store.getState().todos}
+        />,
+        document.getElementById('root')
+    );
+};
 
-log('Dispatching TOGGLE_TODO.');
-store.dispatch({
-    type: 'TOGGLE_TODO',
-    id: 0
-});
-
-log('Current state: ');
-log(store.getState());
-log('---------------');
-
-log('Dispatching SET_VIS_FILTER');
-store.dispatch({
-    type: 'SET_VIS_FILTER',
-    filter: 'SHOW_COMPLETED'
-});
-
-log('Current state: ');
-log(store.getState());
-log('---------------');
+store.subscribe(render);
+render();
 
