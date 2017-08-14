@@ -148,3 +148,4 @@ store.dispatch({
 log('Current state: ');
 log(store.getState());
 log('---------------');
+
